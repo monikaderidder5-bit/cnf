@@ -12,6 +12,8 @@ format short g
 % Create output folders
 mkdir('figures/cnf_disasters_v4')
 
+% commiting a change
+
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
 % Load data
