@@ -219,5 +219,5 @@ for i = 1:length(plot_configs)
     set(gca, 'FontSize', 16);
     grid on;
 end
-SaveFigure('figures/cnf_disasters_v10_m2/IRFs_disasters', 2);
+SaveFigure('figures/cnf_disasters_v10_m4/IRFs_disasters', 2);
 clf('reset')
