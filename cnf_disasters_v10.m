@@ -1,8 +1,5 @@
 % this code modifies v9 in following ways:
 % - 1 unit impact of storms, floods and extreme tempretures
-% - Based on eye-balling of Hack et al (2023) that defence spending shock 
-% can mute out the FFR responce. Maybe, it is like that in the reality,
-% that strong fiscal responce in that case do not cause inflationary effects. 
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
@@ -70,7 +67,7 @@ for i = 1:length(fd_vars)
 end
 
 % Disaster variable
-disaster = data.STORMS;
+disaster = data.DISASTERS;
 
 time = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
 
