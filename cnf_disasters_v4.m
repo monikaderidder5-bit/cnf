@@ -1,6 +1,3 @@
-% this code modifies v3 in following ways:
-% - change VAR for LP for natural disaster shock 
-
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
 clear all; close all; clc
