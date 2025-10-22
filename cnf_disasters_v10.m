@@ -18,7 +18,7 @@ mkdir('figures/cnf_disasters_v10')
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
 % Load data
-[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_disasters_v10.xlsx','Sheet1');
+[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_disasters.xlsx','Sheet1');
 disasters_dates = disasters_xlstext(3:end,1);
 disasters_datesnum = Date2Num(disasters_dates, 'm');
 disasters_vnames_long = disasters_xlstext(1,2:end);
