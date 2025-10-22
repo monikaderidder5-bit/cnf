@@ -12,7 +12,7 @@ mkdir('figures/cnf_disasters_v4')
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
 % Load data
-[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_disasters_v1.xlsx','Sheet1');
+[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_disasters_v10.xlsx','Sheet1');
 disasters_dates = disasters_xlstext(3:end,1);
 disasters_datesnum = Date2Num(disasters_dates, 'm');
 disasters_vnames_long = disasters_xlstext(1,2:end);
@@ -31,7 +31,7 @@ FigSize(26,18)
 for ii=1:disasters_nvar
     subplot(4,3,ii)
     H(ii) = plot(disasters_DATA.(disasters_vnames{ii}),'LineWidth',3,'Color',cmap(1));
-    title(disasters_vnames_long(ii)); 
+    title(disasters_vnames(ii)); 
     DatesPlot(disasters_datesnum(1),disasters_nobs,6,'m') % Set the x-axis label 
     grid on; 
 end
@@ -64,7 +64,7 @@ for i = 1:length(fd_vars)
 end
 
 % Disaster variable
-disaster = data.STORMSFLOODS;
+disaster = data.DISASTERS;
 
 time = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
 
