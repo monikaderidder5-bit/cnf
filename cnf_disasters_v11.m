@@ -56,7 +56,7 @@ log_vars = {'CPIAUCSL','HousePr','StockPr','VIX','INDPRO','CCPI', 'CPIUFDSL'};
 
 for i = 1:length(log_vars)
     disasters_var = log_vars{i};
-    data.(disasters_var) = 400 * log(data.(disasters_var));
+    data.(disasters_var) = 100 * log(data.(disasters_var));
 end
 
 % Disaster variable
