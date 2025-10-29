@@ -1,6 +1,7 @@
 % this code modifies v10 in following ways:
 % - variables in levels
 % - limit to 3 basic variables and see the effect of each disaster
+% - horizon from 0
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
@@ -32,7 +33,7 @@ end
 disasters_nobs = size(disasters_data,1);
 
 % Plot
-FigSize(26,18)
+figure;
 for ii=1:disasters_nvar
     subplot(4,3,ii)
     H(ii) = plot(disasters_DATA.(disasters_vnames{ii}),'LineWidth',3,'Color',cmap(1));
@@ -40,7 +41,6 @@ for ii=1:disasters_nvar
     DatesPlot(disasters_datesnum(1),disasters_nobs,6,'m') % Set the x-axis label 
     grid on; 
 end
-clf('reset')
 
 % Initialize structure
 data = struct();
@@ -63,6 +63,9 @@ end
 % disaster = data.FLOODS;
 % disaster = data.STORMS;
 % disaster = data.WILDFIRES;
+% disaster = data.Flood;
+% disaster = data.Storm;
+% disaster = data.Wildfire;
 % disaster = data.TotalaffectedFlood;
 % disaster = data.TotalaffectedStorm;
 disaster = data.TotalaffectedWildfire;
@@ -88,7 +91,7 @@ time = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
 
 figure;
 bar(time, disaster)
-% SaveFigure('figures/cnf_disasters_v11/EMDAT',2)
+SaveFigure('figures/cnf_disasters_v11/EMDAT_affected_wildfire',2)
 
 % Disaster shock: contemporaneous + 9 lags 
 numLags=12;
@@ -211,4 +214,4 @@ for i = 1:length(plot_configs)
     set(gca, 'FontSize', 16);
     grid on;
 end
-SaveFigure('figures/cnf_disasters_v11/IRFs_wildfire_affected', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_affected_wildfire', 2);
