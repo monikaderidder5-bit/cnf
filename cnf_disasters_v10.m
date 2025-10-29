@@ -11,6 +11,7 @@ warning off all
 format short g
 
 %% Add path to toolbox
+addpath('functions')
 
 % Create output folders
 mkdir('figures/cnf_disasters_v10')
