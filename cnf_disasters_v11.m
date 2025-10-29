@@ -17,7 +17,7 @@ mkdir('figures/cnf_disasters_v11')
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
 % Load data
-[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_disasters.xlsx','Sheet1');
+[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_affected_wildfire.xlsx','Sheet1');
 disasters_dates = disasters_xlstext(3:end,1);
 disasters_datesnum = Date2Num(disasters_dates, 'm');
 disasters_vnames_long = disasters_xlstext(1,2:end);
@@ -60,13 +60,35 @@ for i = 1:length(log_vars)
 end
 
 % Disaster variable
-disaster = data.DISASTERS;
+% disaster = data.FLOODS;
+% disaster = data.STORMS;
+% disaster = data.WILDFIRES;
+% disaster = data.TotalaffectedFlood;
+% disaster = data.TotalaffectedStorm;
+disaster = data.TotalaffectedWildfire;
+
+% Normalize disaster variable so the average of non-zero shocks equals 1 (event/affected)
+Xtemp = disaster;
+weights_temp = zeros(size(Xtemp));
+weights = zeros(size(Xtemp));
+minimum = min(Xtemp(Xtemp > 0));
+for i = 1:length(Xtemp)
+    weights_temp(i) = Xtemp(i) * minimum;
+end
+
+for i = 1:length(Xtemp)
+    if Xtemp(i) ~= 0
+        weights(i) = (nnz(Xtemp) / sum(weights_temp)) * weights_temp(i);
+    end
+end
+disaster = weights;
+data.disaster=disaster;
 
 time = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
 
 figure;
 bar(time, disaster)
-SaveFigure('figures/cnf_disasters_v11/EMDAT',2)
+% SaveFigure('figures/cnf_disasters_v11/EMDAT',2)
 
 % Disaster shock: contemporaneous + 9 lags 
 numLags=12;
@@ -95,12 +117,12 @@ end
 controls = [data.INDPRO_lags, data.CPIAUCSL_lags, data.DGS1_lags];
 
 % Variables for response (level variables)
-response_vars = {'INDPRO','CPIAUCSL','DGS1'};
+response_vars = {'disaster','INDPRO','CPIAUCSL','DGS1'};
 
 % Create response variables
 for i = 1:length(response_vars)
     var = response_vars{i};
-    data.(['Y' num2str(i+1)]) = data.(var)(numLags+1:end, :);
+    data.(['Y' num2str(i)]) = data.(var)(numLags+1:end, :);
 end
 
 % Deterministic component that comprises a constant and a linear trend
@@ -111,10 +133,10 @@ data.C = [ones(T,1)];
 % Base X matrix
 data.X1 = [data.C, disaster_shock, controls];
 
-horizons=36; 
+horizons=46; 
 
 %% Long-run differences
-dependent_indices = 2:4;  % Corresponds to Y2 to Y11
+dependent_indices = 1:4;  % Corresponds to Y1 to Y4
 confidence_levels = [1, 1.645];  % 68% and 90% confidence intervals
 
 for idx = dependent_indices
@@ -122,12 +144,11 @@ for idx = dependent_indices
 
     % Select appropriate X matrix
     X = data.X1;
-    
-    for h = 1:horizons
-        Xh = X(1:end-h, :);
-        Y_t = Y(1:end-h, :);
-        Y_t_h = Y(h+1:end, :);
-        Y_diff = Y_t_h - Y_t;
+    for h = 0:horizons-1
+        Xh = X(2:end-h, :);         % X_t aligned with Y_t_1
+        Y_t_1 = Y(1:end-h-1);       % Y_{t-1}
+        Y_t_h = Y(h+2:end);         % Y_{t+h}
+        Y_diff = Y_t_h - Y_t_1;
 
         % Check rank and condition number
         r = rank(Xh);
@@ -143,17 +164,16 @@ for idx = dependent_indices
         uhat = Y_diff - Xh * coeff;
         se = NeweyWest(uhat, Xh);
 
-        % Ensure row vector format
+        % Ensure row vectors
         coeff = coeff(:)';
         se = se(:)';
 
         % Store coefficients
-        data.(['coeff' num2str(idx)])(h,:) = coeff;
-
+        data.(['coeff' num2str(idx)])(h+1,:) = coeff;
         for c = 1:length(confidence_levels)
             z = confidence_levels(c);
-            data.(['coeff' num2str(idx) '_high' num2str(c)])(h,:) = coeff + z * se;
-            data.(['coeff' num2str(idx) '_low' num2str(c)])(h,:)  = coeff - z * se;
+            data.(['coeff' num2str(idx) '_high' num2str(c)])(h+1,:) = coeff + z * se;
+            data.(['coeff' num2str(idx) '_low'  num2str(c)])(h+1,:) = coeff - z * se;
         end
     end
 end
@@ -164,6 +184,7 @@ main_line_color = [0, 0, 0]; % black
 shade_color = [0.8, 0.8, 0.8]; % light gray
 % Define plot configurations
 plot_configs = {
+    struct('title', 'Affected', 'base', 'coeff1'), ...
     struct('title', 'INDPRO', 'base', 'coeff2'), ... 
     struct('title', 'CPI', 'base', 'coeff3'), ...
     struct('title', '1Y Treasury Bond', 'base', 'coeff4')
@@ -174,11 +195,11 @@ for i = 1:length(plot_configs)
     base = plot_configs{i}.base;
     title_text = plot_configs{i}.title;
     % Dynamically access fields
-    high2 = data.([base '_high2'])(:,3)';
-    low2  = data.([base '_low2'])(:,3)';
-    high1 = data.([base '_high1'])(:,3)';
-    low1  = data.([base '_low1'])(:,3)';
-    coeff = data.(base)(:,3);
+    high2 = data.([base '_high2'])(:,2)';
+    low2  = data.([base '_low2'])(:,2)';
+    high1 = data.([base '_high1'])(:,2)';
+    low1  = data.([base '_low1'])(:,2)';
+    coeff = data.(base)(:,2);
     % Plot shaded areas and main line
     fill([0:horizons-1, fliplr(0:horizons-1)], [high2, fliplr(low2)], ...
         shade_color, 'EdgeColor', 'none', 'FaceAlpha', 0.3); 
@@ -190,4 +211,4 @@ for i = 1:length(plot_configs)
     set(gca, 'FontSize', 16);
     grid on;
 end
-SaveFigure('figures/cnf_disasters_v11/IRFs_flood', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_wildfire_affected', 2);
