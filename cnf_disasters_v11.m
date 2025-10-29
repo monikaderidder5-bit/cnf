@@ -1,8 +1,6 @@
-% this code modifies v9 in following ways:
-% - 1 unit impact of storms, floods and extreme tempretures
-% - Based on eye-balling of Hack et al (2023) that defence spending shock 
-% can mute out the FFR responce. Maybe, it is like that in the reality,
-% that strong fiscal responce in that case do not cause inflationary effects. 
+% this code modifies v10 in following ways:
+% - variables in levels
+% - limit to 3 basic variables and see the effect of each disaster
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
@@ -76,18 +74,18 @@ time = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
 
 figure;
 bar(time, disaster)
-SaveFigure('figures/cnf_disasters_v10/EMDAT',2)
+SaveFigure('figures/cnf_disasters_v11/EMDAT',2)
 
 % Disaster shock: contemporaneous + 9 lags 
 numLags=12;
 disaster_lags = lagmatrix(disaster, 1:numLags);
 disaster_shock = [disaster, disaster_lags];
-disaster_shock = disaster_shock(numLags:end, :);
+disaster_shock = disaster_shock(numLags+1:end, :);
 
 % Lagged control variables
 numLagsCV=12;
 % List of control variables (FD)
-lagged_vars = {'CPIAUCSL','DGS1','INDPRO'};
+lagged_vars = {'INDPRO','CPIAUCSL','DGS1'};
 
 % Create lagged versions
 for i = 1:length(lagged_vars)
@@ -99,18 +97,18 @@ end
 for i = 1:length(lagged_vars)
     var = lagged_vars{i};
     lagged_var = [var '_lags'];
-    data.(lagged_var) = data.(lagged_var)(numLags:end, :);
+    data.(lagged_var) = data.(lagged_var)(numLags+1:end, :);
 end
 
-controls = [data.CPIAUCSL_lags, data.DGS1_lags, data.INDPRO_lags];
+controls = [data.INDPRO_lags, data.CPIAUCSL_lags, data.DGS1_lags];
 
 % Variables for response (level variables)
-response_vars = {'CPIAUCSL','DGS1','INDPRO'};
+response_vars = {'INDPRO','CPIAUCSL','DGS1'};
 
 % Create response variables
 for i = 1:length(response_vars)
     var = response_vars{i};
-    data.(['Y' num2str(i+1)]) = data.(var)(numLags:end, :);
+    data.(['Y' num2str(i+1)]) = data.(var)(numLags+1:end, :);
 end
 
 % Deterministic component that comprises a constant and a linear trend
@@ -174,48 +172,9 @@ main_line_color = [0, 0, 0]; % black
 shade_color = [0.8, 0.8, 0.8]; % light gray
 % Define plot configurations
 plot_configs = {
-    struct('title', 'UNRATE', 'base', 'coeff2'), ...    
+    struct('title', 'INDPRO', 'base', 'coeff2'), ... 
     struct('title', 'CPI', 'base', 'coeff3'), ...
-    struct('title', 'House Price', 'base', 'coeff4'), ...
-    struct('title', 'Stock Price', 'base', 'coeff5'), ...
-    struct('title', 'VIX', 'base', 'coeff6'), ...    
-    struct('title', '1Y Treasury Bond', 'base', 'coeff7')
-};
-for i = 1:length(plot_configs)
-    subplot(2, 3, i);
-    hold on;
-    base = plot_configs{i}.base;
-    title_text = plot_configs{i}.title;
-    % Dynamically access fields
-    high2 = data.([base '_high2'])(:,3)';
-    low2  = data.([base '_low2'])(:,3)';
-    high1 = data.([base '_high1'])(:,3)';
-    low1  = data.([base '_low1'])(:,3)';
-    coeff = data.(base)(:,3);
-    % Plot shaded areas and main line
-    fill([0:horizons-1, fliplr(0:horizons-1)], [high2, fliplr(low2)], ...
-        shade_color, 'EdgeColor', 'none', 'FaceAlpha', 0.3); 
-    fill([0:horizons-1, fliplr(0:horizons-1)], [high1, fliplr(low1)], ...
-        shade_color, 'EdgeColor', 'none', 'FaceAlpha', 0.6);
-    plot(0:horizons-1, coeff, 'Color', main_line_color, 'LineWidth', 2); 
-    line([0, horizons-1], [0, 0], 'Color', 'black', 'LineWidth', 1);
-    title(title_text, 'FontSize', 20);
-    set(gca, 'FontSize', 16);
-    grid on;
-end
-SaveFigure('figures/cnf_disasters_v10/IRFs_disasters1', 2);
-clf('reset')
-
-% Plot 2
-figure;
-main_line_color = [0, 0, 0]; % black
-shade_color = [0.8, 0.8, 0.8]; % light gray
-% Define plot configurations
-plot_configs = {
-    struct('title', 'INDPRO', 'base', 'coeff9'), ...
-    struct('title', 'EBP', 'base', 'coeff10'), ...
-    struct('title', 'Commodity Price', 'base', 'coeff11'), ...
-    struct('title', 'CPI Food', 'base', 'coeff12')
+    struct('title', '1Y Treasury Bond', 'base', 'coeff4')
 };
 for i = 1:length(plot_configs)
     subplot(2, 2, i);
@@ -239,8 +198,9 @@ for i = 1:length(plot_configs)
     set(gca, 'FontSize', 16);
     grid on;
 end
-SaveFigure('figures/cnf_disasters_v10/IRFs_disasters2', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_disasters1', 2);
 clf('reset')
+
 
 %% SECTION 2: MONETARY POLICY (MP) INSTRUMENT FOR Short Rate
 %------------------------------------------------------------------
@@ -316,7 +276,7 @@ for ii = 1:MP_Xnvar
     grid on;
     set(gca, 'Layer', 'top');
 end
-SaveFigure('figures/cnf_disasters_v10/IRFs_u1', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_u1', 2);
 clf('reset')
 
 %% Counterfactuals
@@ -337,7 +297,7 @@ plot(1:MP_VARopt.nsteps, data.coeff12(:,3), 'Color', cmap(1,:), 'LineWidth', 2);
 plot(1:MP_VARopt.nsteps, reg , 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');  % red dashed difference
 title([MP_Xvnames_long{11} ' to disaster shock'], 'FontWeight', 'bold', 'FontSize', 10); 
 xlim([1 MP_VARopt.nsteps]);
-SaveFigure('figures/cnf_disasters_v10/cnf_u1', 2);
+SaveFigure('figures/cnf_disasters_v11/cnf_u1', 2);
 clf('reset')
 
 %% SECTION 3: MONETARY POLICY (MP) INSTRUMENT VAR FOR FG
@@ -410,7 +370,7 @@ for ii = 1:MP2_Xnvar
     grid on;
     set(gca, 'Layer', 'top');
 end
-SaveFigure('figures/cnf_disasters_v10/IRFs_u2', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_u2', 2);
 clf('reset')
 
 %% Counterfactuals
@@ -431,7 +391,7 @@ plot(1:MP2_VARopt.nsteps, data.coeff12(:,3), 'Color', cmap(1,:), 'LineWidth', 2)
 plot(1:MP2_VARopt.nsteps, reg2 , 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');  % red dashed difference
 title([MP2_Xvnames_long{11} ' to disaster shock'], 'FontWeight', 'bold', 'FontSize', 10); 
 xlim([1 MP2_VARopt.nsteps]);
-SaveFigure('figures/cnf_disasters_v10/cnf_u2', 2);
+SaveFigure('figures/cnf_disasters_v11/cnf_u2', 2);
 clf('reset')
 
 
@@ -506,7 +466,7 @@ for ii = 1:MP3_Xnvar
     grid on;
     set(gca, 'Layer', 'top');
 end
-SaveFigure('figures/cnf_disasters_v10/IRFs_u3', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_u3', 2);
 clf('reset')
 
 %% Counterfactuals
@@ -573,7 +533,7 @@ plot(1:MP3_VARopt.nsteps, data.coeff4(:,3), 'Color', cmap(1,:), 'LineWidth', 2);
 plot(1:MP3_VARopt.nsteps, reg3 , 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');  % red dashed difference
 title([MP3_Xvnames_long{5} ' to disaster shock'], 'FontWeight', 'bold', 'FontSize', 10); 
 xlim([1 MP3_VARopt.nsteps]);
-SaveFigure('figures/cnf_disasters_v10/cnf_u3_FINAL', 2);
+SaveFigure('figures/cnf_disasters_v11/cnf_u3_FINAL', 2);
 clf('reset')
 
 %% SECTION 5: MONETARY POLICY (MP) INSTRUMENT FOR Info Effect
@@ -647,7 +607,7 @@ for ii = 1:MP4_Xnvar
     grid on;
     set(gca, 'Layer', 'top');
 end
-SaveFigure('figures/cnf_disasters_v10/IRFs_u4', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_u4', 2);
 clf('reset')
 
 %% Counterfactuals
@@ -668,7 +628,7 @@ plot(1:MP4_VARopt.nsteps, data.coeff12(:,3), 'Color', cmap(1,:), 'LineWidth', 2)
 plot(1:MP4_VARopt.nsteps, reg4 , 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');  % red dashed difference
 title([MP4_Xvnames_long{11} ' to disaster shock'], 'FontWeight', 'bold', 'FontSize', 10); 
 xlim([1 MP4_VARopt.nsteps]);
-SaveFigure('figures/cnf_disasters_v10/cnf_u4', 2);
+SaveFigure('figures/cnf_disasters_v11/cnf_u4', 2);
 clf('reset')
 
 %% SECTION 6: Counterfactuals
@@ -699,7 +659,7 @@ plot(1:MP_VARopt.nsteps, reg_u3 , 'LineWidth', 2);
 plot(1:MP_VARopt.nsteps, reg_u4 , 'LineWidth', 2);  
 legend('Standard shock (u1)', 'Odyssean guidance (u2)', 'LSAP shock (u3)', 'Delphic guidance (u4)');
 xlim([1 MP_VARopt.nsteps]);
-SaveFigure('figures/cnf_disasters_v10/regs', 2);
+SaveFigure('figures/cnf_disasters_v11/regs', 2);
 clf('reset')
 
 % Counterfactuals
@@ -728,5 +688,5 @@ plot(1:MP_VARopt.nsteps, data.coeff12(:,3), 'Color', cmap(1,:), 'LineWidth', 2);
 plot(1:MP_VARopt.nsteps, reg13 , 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--');  % red dashed difference
 title([MP_Xvnames_long{11} ' to disaster shock'], 'FontWeight', 'bold', 'FontSize', 10); 
 xlim([1 MP_VARopt.nsteps]);
-SaveFigure('figures/cnf_disasters_v10/cnf_u1u3', 2);
+SaveFigure('figures/cnf_disasters_v11/cnf_u1u3', 2);
 clf('reset')
