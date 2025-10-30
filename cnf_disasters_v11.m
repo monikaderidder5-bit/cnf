@@ -1,7 +1,7 @@
 % this code modifies v10 in following ways:
 % - variables in levels
 % - limit to 3 basic variables and see the effect of each disaster
-% - horizon from 0
+% - horizon from 0 (!)
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
@@ -10,7 +10,7 @@ warning off all
 format short g
 
 %% Add path to toolbox
-addpath('functions')
+% addpath('functions')
 
 % Create output folders
 mkdir('figures/cnf_disasters_v11')
@@ -18,7 +18,7 @@ mkdir('figures/cnf_disasters_v11')
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
 % Load data
-[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_affected_wildfire.xlsx','Sheet1');
+[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_count_storm.xlsx','Sheet1');
 disasters_dates = disasters_xlstext(3:end,1);
 disasters_datesnum = Date2Num(disasters_dates, 'm');
 disasters_vnames_long = disasters_xlstext(1,2:end);
@@ -60,17 +60,53 @@ for i = 1:length(log_vars)
 end
 
 % Disaster variable
-% disaster = data.FLOODS;
-% disaster = data.STORMS;
-% disaster = data.WILDFIRES;
+% % disaster = data.FLOODS;
+% % disaster = data.STORMS;
+% % disaster = data.WILDFIRES;
 % disaster = data.Flood;
-% disaster = data.Storm;
+disaster = data.Storm;
 % disaster = data.Wildfire;
 % disaster = data.TotalaffectedFlood;
 % disaster = data.TotalaffectedStorm;
-disaster = data.TotalaffectedWildfire;
+% disaster = data.TotalaffectedWildfire;
 
-% Normalize disaster variable so the average of non-zero shocks equals 1 (event/affected)
+t = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
+
+figure;
+bar(t, disaster)
+SaveFigure('figures/cnf_disasters_v11/EMDAT_count_storm',2)
+
+%% Exclude outliers (Interquartile Range):
+% P5 = quantile(disaster, 0.05);
+% P95 = quantile(disaster, 0.95);
+% IQR = P95 - P5;
+% 
+% lower_bound = P5 - 1.5 * IQR;
+% upper_bound = P95 + 1.5 * IQR;
+% 
+% % Logical mask for inliers
+% inlier_idx = (disaster >= lower_bound) & (disaster <= upper_bound);
+% 
+% % Copy the original data
+% disasterr = disaster;
+% 
+% % Replace outliers with 0
+% disasterr(~inlier_idx) = 0;
+% 
+% figure;
+% subplot(2,1,1)
+% bar(t, disaster)
+% title('all data')
+% 
+% subplot(2,1,2)
+% bar(t, disasterr)
+% title('Without Outliers')
+% SaveFigure('figures/cnf_disasters_v11/EMDAT_count_storm',2)
+% 
+% % Run the regression without outliers
+% disaster = disasterr;
+
+%% Normalize disaster variable so the average of non-zero shocks equals 1 (event/affected)
 Xtemp = disaster;
 weights_temp = zeros(size(Xtemp));
 weights = zeros(size(Xtemp));
@@ -86,12 +122,6 @@ for i = 1:length(Xtemp)
 end
 disaster = weights;
 data.disaster=disaster;
-
-time = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
-
-figure;
-bar(time, disaster)
-SaveFigure('figures/cnf_disasters_v11/EMDAT_affected_wildfire',2)
 
 % Disaster shock: contemporaneous + 9 lags 
 numLags=12;
@@ -214,4 +244,4 @@ for i = 1:length(plot_configs)
     set(gca, 'FontSize', 16);
     grid on;
 end
-SaveFigure('figures/cnf_disasters_v11/IRFs_affected_wildfire', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_count_storm_no_outliers', 2);
