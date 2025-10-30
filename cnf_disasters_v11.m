@@ -18,7 +18,7 @@ mkdir('figures/cnf_disasters_v11')
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
 % Load data
-[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_count.xlsx','Sheet1');
+[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_affected_storm.xlsx','Sheet1');
 disasters_dates = disasters_xlstext(3:end,1);
 disasters_datesnum = Date2Num(disasters_dates, 'm');
 disasters_vnames_long = disasters_xlstext(1,2:end);
@@ -60,11 +60,11 @@ for i = 1:length(log_vars)
 end
 
 % Disaster variable
-disaster = data.Flood;
+% disaster = data.Flood;
 % disaster = data.Storm;
 % disaster = data.Wildfire;
 % disaster = data.TotalaffectedFlood;
-% disaster = data.TotalaffectedStorm;
+disaster = data.TotalaffectedStorm;
 % disaster = data.TotalaffectedWildfire;
 
 t = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
