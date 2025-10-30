@@ -11,7 +11,8 @@ format short g
 % addpath('functions')
 
 % Create output folders
-mkdir('figures/cnf_disasters_v12')
+% mkdir('figures/cnf_disasters_v12')
+mkdir('figures/cnf_disasters_v12/quantiles')
 
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
@@ -65,14 +66,32 @@ disaster_types = {'TotalaffectedFlood', 'TotalaffectedStorm', 'TotalaffectedWild
 for d = 1:length(disaster_types)
     disaster_name = disaster_types{d};
     disaster = data.(disaster_name);
+    clean_name = strrep(disaster_name, 'Totalaffected', '');
 
     %% Plot raw disaster variable
     t = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
     figure;
-    clean_name = strrep(disaster_name, 'Totalaffected', '');
     bar(t, disaster)
     title(['Number of affected: ' clean_name])
-    SaveFigure(['figures/cnf_disasters_v12/EMDAT_affected_' lower(clean_name)], 2)
+    % SaveFigure(['figures/cnf_disasters_v12/EMDAT_affected_' lower(clean_name)], 2)
+
+    %% Exclude top 5% events
+    threshold_95 = quantile(disaster, 0.95);
+    disaster_top5_removed = disaster;
+    disaster_top5_removed(disaster > threshold_95) = 0;
+
+    % Plot before and after removing top 5%
+    figure;
+    subplot(2,1,1)
+    bar(t, disaster)
+    title(['All data: ' clean_name])
+    subplot(2,1,2)
+    bar(t, disaster_top5_removed)
+    title(['Top 5% removed: ' clean_name])
+    SaveFigure(['figures/cnf_disasters_v12/quantiles/EMDAT_affected_' lower(clean_name) '_noTop5'], 2)
+    
+    % Replace disaster
+    disaster = disaster_top5_removed;
 
     %% Normalize disaster variable (mean of non-zero = 1)
     weights_temp = zeros(size(disaster));
@@ -163,7 +182,8 @@ for d = 1:length(disaster_types)
 
     %% Plot
     figure;
-    sgtitle(sprintf('Impulse: %s \nAvg. affected: %.0f people', clean_name, avg));
+    avg_rounded_k = round(avg / 1000);  % Round to nearest thousand
+    sgtitle(sprintf('Impulse: %s \nAvg. of non-zero event: %dK people', clean_name, avg_rounded_k));
     main_line_color = [0, 0, 0];
     shade_color = [0.8, 0.8, 0.8];
 
@@ -196,5 +216,6 @@ for d = 1:length(disaster_types)
     end
 
     % Save figure with disaster name
-    SaveFigure(sprintf('figures/cnf_disasters_v12/IRFs_affected_%s', lower(clean_name)), 2);
+    SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/IRFs_affected_%s_noTop5', lower(clean_name)), 2);
+    % SaveFigure(sprintf('figures/cnf_disasters_v12/IRFs_affected_%s', lower(clean_name)), 2);
 end
