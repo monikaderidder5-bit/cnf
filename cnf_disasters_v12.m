@@ -69,54 +69,62 @@ for d = 1:length(disaster_types)
     disaster = data.(disaster_name);
     clean_name = strrep(disaster_name, 'Totalaffected', '');
 
-    %% Plot raw disaster variable
+    % %% Plot raw disaster variable
     t = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
-    figure;
-    bar(t, disaster)
-    title(['Number of affected: ' clean_name])
+    % figure;
+    % bar(t, disaster)
+    % title(['Number of affected: ' clean_name])
     % SaveFigure(['figures/cnf_disasters_v12/EMDAT_affected_' lower(clean_name)], 2)
 
-    %% Exclude top 5% events
-    threshold_95 = quantile(disaster, 0.95);
-    disaster_top5_removed = disaster;
-    disaster_top5_removed(disaster > threshold_95) = 0;
+    %% Define quantiles to keep (top X% major events)
+    quantile_levels = [0.99, 0.95, 0.80, 0.50, 0.01];  % Corresponding to 1%, 5%, 20%, 50%, 99%
 
-    % Plot before and after removing top 5%
-    figure;
-    subplot(2,1,1)
-    bar(t, disaster)
-    title(['All data: ' clean_name])
-    subplot(2,1,2)
-    bar(t, disaster_top5_removed)
-    title(['Top 5% removed: ' clean_name])
-    SaveFigure(['figures/cnf_disasters_v12/quantiles/EMDAT_affected_' lower(clean_name) '_noTop5'], 2)
+    for q = 1:length(quantile_levels)
+        q_level = quantile_levels(q);
+        q_str = strrep(num2str(round((1 - q_level) * 100)), '.', '_');  % e.g., "1", "5"
     
-    % Replace disaster
-    disaster = disaster_top5_removed;
-
-    %% Normalize disaster variable (mean of non-zero = 1)
-    weights_temp = zeros(size(disaster));
-    weights = zeros(size(disaster));
-    minimum = min(disaster(disaster > 0));
-    avg = mean(disaster(disaster > 0));
-
-    for i = 1:length(disaster)
-        weights_temp(i) = disaster(i) * minimum;
-    end
-
-    for i = 1:length(disaster)
-        if disaster(i) ~= 0
-            weights(i) = (nnz(disaster) / sum(weights_temp)) * weights_temp(i);
+        %% === FILTER: Keep only top X% of disasters ===
+        threshold = quantile(disaster, q_level);
+        top_idx = (disaster >= threshold);
+    
+        disaster_q = zeros(size(disaster));
+        disaster_q(top_idx) = disaster(top_idx);
+    
+        %% Plot raw vs top-X% data
+        figure;
+        subplot(2,1,1)
+        bar(t, disaster)
+        title(['All data: ' clean_name])
+    
+        subplot(2,1,2)
+        bar(t, disaster_q)
+        title([sprintf('Top %.0f%% major: ', (1 - q_level)*100), clean_name])
+    
+        SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/EMDAT_affected_%s_top%s', ...
+            lower(clean_name), q_str), 2)
+    
+        %% Normalize filtered disaster
+        weights_temp = zeros(size(disaster_q));
+        weights = zeros(size(disaster_q));
+        if any(disaster_q > 0)
+            minimum = min(disaster_q(disaster_q > 0));
+            avg = mean(disaster_q(disaster_q > 0));
+            for i = 1:length(disaster_q)
+                weights_temp(i) = disaster_q(i) * minimum;
+            end
+            for i = 1:length(disaster_q)
+                if disaster_q(i) ~= 0
+                    weights(i) = (nnz(disaster_q) / sum(weights_temp)) * weights_temp(i);
+                end
+            end
         end
-    end
-
-    disaster = weights;
-    data.disaster = disaster;
+        disaster_q = weights;
+        data.disaster = disaster_q;
 
     %% Create shocks and controls (same as before)
     numLags = 12;
-    disaster_lags = lagmatrix(disaster, 1:numLags);
-    disaster_shock = [disaster, disaster_lags];
+    disaster_lags = lagmatrix(disaster_q, 1:numLags);
+    disaster_shock = [disaster_q, disaster_lags];
     disaster_shock = disaster_shock(numLags+1:end, :);
 
     numLagsCV = 12;
@@ -183,8 +191,9 @@ for d = 1:length(disaster_types)
 
     %% Plot
     figure;
-    avg_rounded_k = round(avg / 1000);  % Round to nearest thousand
-    sgtitle(sprintf('Impulse: %s \nAvg. of non-zero event: %dK people', clean_name, avg_rounded_k));
+    avg_rounded_k = round(avg / 1000);  % Avg. affected (in K)
+    sgtitle(sprintf('Impulse: %s \nTop %.0f%% events only | Avg. affected: %dK people', ...
+        clean_name, (1 - q_level)*100, avg_rounded_k));
     main_line_color = [0, 0, 0];
     shade_color = [0.8, 0.8, 0.8];
 
@@ -216,7 +225,7 @@ for d = 1:length(disaster_types)
         grid on;
     end
 
-    % Save figure with disaster name
-    SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/IRFs_affected_%s_noTop5', lower(clean_name)), 2);
-    % SaveFigure(sprintf('figures/cnf_disasters_v12/IRFs_affected_%s', lower(clean_name)), 2);
+    SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/IRFs_affected_%s_top%s', ...
+        lower(clean_name), q_str), 2);
+    end
 end
