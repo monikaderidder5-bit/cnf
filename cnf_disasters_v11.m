@@ -18,7 +18,7 @@ mkdir('figures/cnf_disasters_v11')
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
 % Load data
-[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_count_storm.xlsx','Sheet1');
+[disasters_xlsdata, disasters_xlstext] = xlsread('data/data_count.xlsx','Sheet1');
 disasters_dates = disasters_xlstext(3:end,1);
 disasters_datesnum = Date2Num(disasters_dates, 'm');
 disasters_vnames_long = disasters_xlstext(1,2:end);
@@ -60,11 +60,8 @@ for i = 1:length(log_vars)
 end
 
 % Disaster variable
-% % disaster = data.FLOODS;
-% % disaster = data.STORMS;
-% % disaster = data.WILDFIRES;
-% disaster = data.Flood;
-disaster = data.Storm;
+disaster = data.Flood;
+% disaster = data.Storm;
 % disaster = data.Wildfire;
 % disaster = data.TotalaffectedFlood;
 % disaster = data.TotalaffectedStorm;
@@ -74,7 +71,7 @@ t = datetime(2000,1,1):calmonths(1):datetime(2019,12,1);
 
 figure;
 bar(t, disaster)
-SaveFigure('figures/cnf_disasters_v11/EMDAT_count_storm',2)
+SaveFigure('figures/cnf_disasters_v11/EMDAT_affected_storm',2)
 
 %% Exclude outliers (Interquartile Range):
 % P5 = quantile(disaster, 0.05);
@@ -101,23 +98,24 @@ SaveFigure('figures/cnf_disasters_v11/EMDAT_count_storm',2)
 % subplot(2,1,2)
 % bar(t, disasterr)
 % title('Without Outliers')
-% SaveFigure('figures/cnf_disasters_v11/EMDAT_count_storm',2)
+% SaveFigure('figures/cnf_disasters_v11/EMDAT_affected_storm',2)
 % 
 % % Run the regression without outliers
 % disaster = disasterr;
 
 %% Normalize disaster variable so the average of non-zero shocks equals 1 (event/affected)
-Xtemp = disaster;
-weights_temp = zeros(size(Xtemp));
-weights = zeros(size(Xtemp));
-minimum = min(Xtemp(Xtemp > 0));
-for i = 1:length(Xtemp)
-    weights_temp(i) = Xtemp(i) * minimum;
+weights_temp = zeros(size(disaster));
+weights = zeros(size(disaster));
+minimum = min(disaster(disaster > 0));
+avg = mean(disaster(disaster>0));
+
+for i = 1:length(disaster)
+    weights_temp(i) = disaster(i) * minimum;
 end
 
-for i = 1:length(Xtemp)
-    if Xtemp(i) ~= 0
-        weights(i) = (nnz(Xtemp) / sum(weights_temp)) * weights_temp(i);
+for i = 1:length(disaster)
+    if disaster(i) ~= 0
+        weights(i) = (nnz(disaster) / sum(weights_temp)) * weights_temp(i);
     end
 end
 disaster = weights;
@@ -213,6 +211,7 @@ end
 
 % Plot 1
 figure;
+sgtitle(sprintf('Impulse: \nAvg. affected: %.0f people', avg))
 main_line_color = [0, 0, 0]; % black
 shade_color = [0.8, 0.8, 0.8]; % light gray
 % Define plot configurations
@@ -244,4 +243,4 @@ for i = 1:length(plot_configs)
     set(gca, 'FontSize', 16);
     grid on;
 end
-SaveFigure('figures/cnf_disasters_v11/IRFs_count_storm_no_outliers', 2);
+SaveFigure('figures/cnf_disasters_v11/IRFs_affected_storm', 2);
