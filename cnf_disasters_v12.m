@@ -8,12 +8,12 @@ clear all; close all; clc
 warning off all
 format short g
 
-%% Add path to toolbox
+%% Add path to functions
 % addpath('functions')
 
 % Create output folders
 % mkdir('figures/cnf_disasters_v12')
-mkdir('figures/cnf_disasters_v12/quantiles')
+mkdir('figures/cnf_disasters_v12/quantiles/affected')
 
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
@@ -100,7 +100,7 @@ for d = 1:length(disaster_types)
         bar(t, disaster_q)
         title([sprintf('Top %.0f%% major: ', (1 - q_level)*100), clean_name])
     
-        SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/EMDAT_affected_%s_top%s', ...
+        SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/affected//EMDAT_affected_%s_top%s', ...
             lower(clean_name), q_str), 2)
     
         %% Normalize filtered disaster
@@ -225,7 +225,7 @@ for d = 1:length(disaster_types)
         grid on;
     end
 
-    SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/IRFs_affected_%s_top%s', ...
+    SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/affected//IRFs_affected_%s_top%s', ...
         lower(clean_name), q_str), 2);
     end
 end
