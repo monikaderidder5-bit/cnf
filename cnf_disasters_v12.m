@@ -1,5 +1,5 @@
 % this code modifies v11 in following ways:
-% - loop over variables
+% - loop over variables 
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
