@@ -196,5 +196,6 @@ for d = 1:length(disaster_types)
     end
 
     % Save figure with disaster name
+    % saveas(d,sprintf(['figures/cnf_disasters_v13' num2str(d) '/affected.png'],d));
     SaveFigure(sprintf('figures/cnf_disasters_v13/IRFs_affected_%s', lower(clean_name)), 2);
 end
