@@ -1,5 +1,6 @@
 % this code modifies v11 in following ways:
-% - loop over variables 
+% - loop over variables
+% - no top 5% major events
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
