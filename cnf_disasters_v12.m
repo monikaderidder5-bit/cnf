@@ -12,7 +12,7 @@ format short g
 
 % Create output folders
 % mkdir('figures/cnf_disasters_v12')
-mkdir('figures/cnf_disasters_v12/quantiles')
+mkdir('figures/cnf_disasters_v12')
 
 %% SECTION 1: disasters INSTRUMENT VAR
 %------------------------------------------------------------------
@@ -75,23 +75,23 @@ for d = 1:length(disaster_types)
     title(['Number of affected: ' clean_name])
     % SaveFigure(['figures/cnf_disasters_v12/EMDAT_affected_' lower(clean_name)], 2)
 
-    % %% Exclude top 5% events
-    % threshold_95 = quantile(disaster, 0.95);
-    % disaster_top5_removed = disaster;
-    % disaster_top5_removed(disaster > threshold_95) = 0;
-    % 
-    % % Plot before and after removing top 5%
-    % figure;
-    % subplot(2,1,1)
-    % bar(t, disaster)
-    % title(['All data: ' clean_name])
-    % subplot(2,1,2)
-    % bar(t, disaster_top5_removed)
-    % title(['Top 5% removed: ' clean_name])
-    % SaveFigure(['figures/cnf_disasters_v12/quantiles/EMDAT_affected_' lower(clean_name) '_noTop5'], 2)
-    % 
-    % % Replace disaster
-    % disaster = disaster_top5_removed;
+    %% Exclude top 5% events
+    threshold_95 = quantile(disaster, 0.95);
+    disaster_top5_removed = disaster;
+    disaster_top5_removed(disaster > threshold_95) = 0;
+
+    % Plot before and after removing top 5%
+    figure;
+    subplot(2,1,1)
+    bar(t, disaster)
+    title(['All data: ' clean_name])
+    subplot(2,1,2)
+    bar(t, disaster_top5_removed)
+    title(['Top 5% removed: ' clean_name])
+    SaveFigure(['figures/cnf_disasters_v12//EMDAT_affected_' lower(clean_name) '_noTop5'], 2)
+
+    % Replace disaster
+    disaster = disaster_top5_removed;
 
     %% Normalize disaster variable (mean of non-zero = 1)
     weights_temp = zeros(size(disaster));
@@ -216,6 +216,6 @@ for d = 1:length(disaster_types)
     end
 
     % Save figure with disaster name
-    SaveFigure(sprintf('figures/cnf_disasters_v12/quantiles/IRFs_affected_%s_noTop5', lower(clean_name)), 2);
+    SaveFigure(sprintf('figures/cnf_disasters_v12//IRFs_affected_%s_noTop5', lower(clean_name)), 2);
     % SaveFigure(sprintf('figures/cnf_disasters_v12/IRFs_affected_%s', lower(clean_name)), 2);
 end
