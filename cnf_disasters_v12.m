@@ -12,7 +12,6 @@ format short g
 % addpath('functions')
 
 % Create output folders
-% mkdir('figures/cnf_disasters_v12')
 mkdir('figures/cnf_disasters_v12')
 
 %% SECTION 1: disasters INSTRUMENT VAR
