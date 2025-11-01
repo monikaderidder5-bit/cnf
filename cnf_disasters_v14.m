@@ -150,6 +150,7 @@ for s = 1:length(shock_vars)
     end
 
     % Save the figure
+    % saveas(gcf, sprintf('figures/cnf_disasters_v13/IRFs_affected_%s.png', lower(clean_name)));
     SaveFigure(['figures/cnf_disasters_v14/normalized_IRFs_VAR_affected_' lower(shock_label)], 2);
     clf('reset');  % Reset figure for next loop
 
