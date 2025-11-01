@@ -1,5 +1,6 @@
 % this code modifies v12 in following ways:
-% - add variables one by one
+% - independent variables in FD (change in horizons)
+% - dependent variable is long differences Y_{t+h} - Y_{t-1}
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
@@ -57,6 +58,13 @@ for i = 1:length(log_vars)
     data.(disasters_var) = 100 * log(data.(disasters_var));
 end
 
+% First difference 
+fd_vars = [{'UNRATE','DGS1','EBP'}, log_vars]; % Include level vars + log-transformed ones
+
+for i = 1:length(fd_vars)
+    var = fd_vars{i};
+    data.([var '_FD']) = diff(data.(var));
+end
 
 %% LOOP over disaster types
 disaster_types = {'TotalaffectedFlood', 'TotalaffectedStorm', 'TotalaffectedWildfire'};
@@ -96,10 +104,10 @@ for d = 1:length(disaster_types)
     numLags = 12;
     disaster_lags = lagmatrix(disaster, 1:numLags);
     disaster_shock = [disaster, disaster_lags];
-    disaster_shock = disaster_shock(numLags+1:end, :);
+    disaster_shock = disaster_shock(numLags+2:end, :);
 
     numLagsCV = 12;
-    lagged_vars = {'INDPRO','CPIAUCSL','DGS1'};
+    lagged_vars = {'INDPRO_FD','CPIAUCSL_FD','DGS1_FD'};
 
     for i = 1:length(lagged_vars)
         var = lagged_vars{i};
@@ -107,16 +115,16 @@ for d = 1:length(disaster_types)
         data.([var '_lags']) = data.([var '_lags'])(numLags+1:end, :);
     end
 
-    controls = [data.INDPRO_lags, data.CPIAUCSL_lags, data.DGS1_lags];
+    controls = [data.INDPRO_FD_lags, data.CPIAUCSL_FD_lags, data.DGS1_FD_lags];
 
     %% Responses
     response_vars = {'disaster','INDPRO','CPIAUCSL','DGS1'};
     for i = 1:length(response_vars)
         var = response_vars{i};
-        data.(['Y' num2str(i)]) = data.(var)(numLags+1:end, :);
+        data.(['Y' num2str(i)]) = data.(var)(numLags+1:end-1, :);
     end
 
-    T = size(data.Y2, 1);
+    T = size(controls, 1);
     data.C = [ones(T,1)];
     data.X1 = [data.C, disaster_shock, controls];
 
@@ -129,7 +137,7 @@ for d = 1:length(disaster_types)
         Y = data.(['Y' num2str(idx)]);
         X = data.X1;
 
-        for h = 0:horizons-1
+        for h = 1:horizons
             Xh = X(2:end-h, :);
             Y_t_1 = Y(1:end-h-1);
             Y_t_h = Y(h+2:end);
@@ -151,11 +159,11 @@ for d = 1:length(disaster_types)
             coeff = coeff(:)';
             se = se(:)';
 
-            data.(['coeff' num2str(idx)])(h+1,:) = coeff;
+            data.(['coeff' num2str(idx)])(h,:) = coeff;
             for c = 1:length(confidence_levels)
                 z = confidence_levels(c);
-                data.(['coeff' num2str(idx) '_high' num2str(c)])(h+1,:) = coeff + z * se;
-                data.(['coeff' num2str(idx) '_low'  num2str(c)])(h+1,:) = coeff - z * se;
+                data.(['coeff' num2str(idx) '_high' num2str(c)])(h,:) = coeff + z * se;
+                data.(['coeff' num2str(idx) '_low'  num2str(c)])(h,:) = coeff - z * se;
             end
         end
     end
