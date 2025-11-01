@@ -25,25 +25,6 @@ disasters_vnames = disasters_xlstext(2,2:end);
 disasters_nvar = length(disasters_vnames);
 disasters_data = Num2NaN(disasters_xlsdata);
 
-% Build structure
-for ii = 1:disasters_nvar
-    disasters_DATA.(disasters_vnames{ii}) = disasters_data(:,ii);
-end
-disasters_nobs = size(disasters_data,1);
-
-% Plot
-figure;
-for ii=1:disasters_nvar
-    subplot(5,3,ii)
-    H(ii) = plot(disasters_DATA.(disasters_vnames{ii}),'LineWidth',3,'Color',cmap(1));
-    title(disasters_vnames(ii)); 
-    DatesPlot(disasters_datesnum(1),disasters_nobs,6,'m') % Set the x-axis label 
-    grid on; 
-end
-
-% Initialize structure
-data = struct();
-
 % Assign each variable to the structure (Rename)
 for i = 1:disasters_nvar
     disasters_varname = disasters_vnames{i};
