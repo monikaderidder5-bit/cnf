@@ -1,5 +1,5 @@
 % this code modifies v13 in following ways:
-% - no cummulative
+% - no long differences: Y{t+h} instead of Y_{t+h}-Y{t-1}
 
 %% 0. PRELIMINARIES
 %------------------------------------------------------------------
@@ -119,9 +119,9 @@ for d = 1:length(disaster_types)
 
         for h = 1:horizons
             Xh = X(2:end-h, :);
-            Y_t_1 = Y(1:end-h-1);
+            %Y_t_1 = Y(1:end-h-1);
             Y_t_h = Y(h+2:end);
-            Y_diff = Y_t_h - Y_t_1;
+            Y_diff = Y_t_h ;%- Y_t_1;
 
             r = rank(Xh);
             cond_num = rcond(Xh'*Xh);
@@ -184,6 +184,6 @@ for d = 1:length(disaster_types)
     end
 
     % Save figure with disaster name
-    saveas(gcf, sprintf('figures/cnf_disasters_v13/IRFs_affected_%s.png', lower(clean_name)));
-    % SaveFigure(sprintf('figures/cnf_disasters_v15/IRFs_affected_%s', lower(clean_name)), 2);
+    % saveas(gcf, sprintf('figures/cnf_disasters_v13/IRFs_affected_%s.png', lower(clean_name)));
+    SaveFigure(sprintf('figures/cnf_disasters_v15/IRFs_no_long_diff_affected_%s', lower(clean_name)), 2);
 end
